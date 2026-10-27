@@ -1,0 +1,5 @@
+config.json
+datos/
+resultados/
+__pycache__/
+*.part

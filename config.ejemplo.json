@@ -1,0 +1,14 @@
+{
+  "apellido": "apellido",
+  "hilos": 16,
+  "bitnet_dir": "/ruta/a/BitNet",
+  "llamacpp_dir": "/ruta/a/llama.cpp",
+  "modelos": {
+    "bitnet-2b": "/ruta/a/modelos/bitnet-2b/ggml-model-i2_s.gguf",
+    "falcon3-3b-ternario": "/ruta/a/modelos/falcon3-3b-ternario/ggml-model-i2_s.gguf",
+    "bonsai2-2b-ternario": "/ruta/a/modelos/bonsai2-2b-ternario/Ternary-Bonsai-2-2B-Q2_0.gguf",
+    "falcon3-3b-q4": "/ruta/a/modelos/falcon3-3b-q4/Falcon3-3B-Instruct-q4_k_m.gguf",
+    "qwen2.5-1.5b-q4": "/ruta/a/modelos/qwen2.5-1.5b-q4/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+    "qwen3.5-2b-q4": "/ruta/a/modelos/qwen3.5-2b-q4/Qwen3.5-2B-Q4_K_M.gguf"
+  }
+}
