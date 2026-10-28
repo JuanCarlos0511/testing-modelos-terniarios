@@ -35,10 +35,12 @@ RAIZ = Path(__file__).resolve().parent
 # El GGUF oficial de BitNet trae una plantilla que coloca el fin de texto justo antes de la
 # respuesta; se usa la del modelo original (microsoft/bitnet-b1.58-2B-4T, commit 04c3b9a),
 # que es la misma que bitnet.cpp aplicaba con su plantilla integrada "bitnet".
+# Bonsai usa PQ2_0 (los mismos pesos ternarios que Q2_0, con empaquetado propio) por acuerdo
+# del equipo; llama.cpp lo rechaza, por eso corre en el fork de PrismML (rama prism).
 MODELOS = {
     "bitnet-2b":           {"motor": "bitnet",   "plantilla": {}, "archivo_plantilla": "plantillas/bitnet-2b.jinja"},
     "falcon3-3b-ternario": {"motor": "bitnet",   "plantilla": {}},
-    "bonsai2-2b-ternario": {"motor": "llamacpp", "plantilla": {"enable_thinking": False}},
+    "bonsai2-2b-ternario": {"motor": "prism",    "plantilla": {"enable_thinking": False}},
     "falcon3-3b-q4":       {"motor": "llamacpp", "plantilla": {}},
     "qwen2.5-1.5b-q4":     {"motor": "llamacpp", "plantilla": {}},
     "qwen3.5-2b-q4":       {"motor": "llamacpp", "plantilla": {"enable_thinking": False}},
@@ -95,7 +97,7 @@ def cargar_config(ruta):
     faltan = [m for m in MODELOS if m not in cfg.get("modelos", {})]
     if faltan:
         sys.exit(f"config.json: faltan rutas de modelos: {', '.join(faltan)}")
-    for motor in ("bitnet", "llamacpp"):
+    for motor in ("bitnet", "llamacpp", "prism"):
         cfg.setdefault(f"{motor}_bin", str(Path(cfg[f"{motor}_dir"]) / "build" / "bin"))
     cfg.setdefault("hilos", nucleos_fisicos())
     return cfg
@@ -331,6 +333,8 @@ def cmd_correr(args):
                             "tokens_generados": uso["completion_tokens"],
                             "tiempo_prompt_ms": round(tiempos["prompt_ms"], 3),
                             "tiempo_generacion_ms": round(tiempos["predicted_ms"], 3),
+                            "tokens_por_segundo_prompt": round(tiempos["prompt_per_second"], 2),
+                            "tokens_por_segundo_generacion": round(tiempos["predicted_per_second"], 2),
                             "truncada": eleccion["finish_reason"] == "length",
                             "fecha_hora": ahora(),
                         }
@@ -339,7 +343,8 @@ def cmd_correr(args):
                         os.fsync(salida.fileno())
                         print(f"  {modelo} {idioma} #{pid} ({n}/{len(pendientes)}): "
                               f"{fila['tokens_generados']} tokens, "
-                              f"{(fila['tiempo_prompt_ms'] + fila['tiempo_generacion_ms']) / 1000:.1f} s"
+                              f"{(fila['tiempo_prompt_ms'] + fila['tiempo_generacion_ms']) / 1000:.1f} s, "
+                              f"{fila['tokens_por_segundo_generacion']:.1f} t/s"
                               f"{', TRUNCADA' if fila['truncada'] else ''}")
             finally:
                 servidor.cerrar()
@@ -398,6 +403,7 @@ def texto_versiones(cfg):
     if submodulo.is_dir():
         lineas.append(f"bitnet.cpp, submódulo llama.cpp: {commit(submodulo)}")
     lineas.append(f"llama.cpp: {commit(cfg['llamacpp_dir'])}")
+    lineas.append(f"llama.cpp de PrismML (rama prism): {commit(cfg['prism_dir'])}")
     lineas.append(f"MGSM (google-research/url-nlp): {MGSM_COMMIT}")
     lineas.append("Modelos:")
     for modelo in MODELOS:

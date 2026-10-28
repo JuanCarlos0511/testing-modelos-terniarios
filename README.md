@@ -12,7 +12,16 @@ contiene solo las rutas de cada laptop y no se sube al repositorio.
 
 - bitnet.cpp y llama.cpp (b11555 o posterior) compilados para CPU, con
   `llama-server` y `llama-bench`.
-- Los 6 modelos de la tabla 1 en GGUF.
+- El fork de llama.cpp de PrismML (rama `prism`), para Bonsai en PQ2_0:
+
+  ```bash
+  git clone --depth 1 -b prism https://github.com/PrismML-Eng/llama.cpp llama.cpp-prism
+  cmake -S llama.cpp-prism -B llama.cpp-prism/build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=ON
+  cmake --build llama.cpp-prism/build --target llama-server llama-bench -j
+  ```
+
+- Los 6 modelos de la tabla 1 en GGUF. Bonsai en `Ternary-Bonsai-2-2B-PQ2_0.gguf`
+  (prism-ml/Ternary-Bonsai-2-2B-gguf, SHA-256 `d5f01a4e…f87008f5b`).
 - Python 3.9 o posterior y `pip install -r requirements.txt` (psutil).
 
 ## Uso
@@ -37,8 +46,9 @@ limitan la corrida a una parte, por ejemplo `--modelos bitnet-2b --idiomas es`.
 
 ## Qué hace `correr`
 
-Para cada modelo e idioma inicia un `llama-server` del motor de la tabla 1
-(bitnet.cpp para `bitnet-2b` y `falcon3-3b-ternario`; llama.cpp para el resto) con:
+Para cada modelo e idioma inicia un `llama-server` de su motor: bitnet.cpp para
+`bitnet-2b` y `falcon3-3b-ternario`; el fork de PrismML para `bonsai2-2b-ternario`;
+llama.cpp para el resto. Opciones:
 
 - `-c 2048 -np 1 -t <hilos> -ngl 0 --jinja --reasoning-format none`;
 - la plantilla de chat del propio GGUF y, en Qwen3.5 y Bonsai,
@@ -50,8 +60,18 @@ Para cada modelo e idioma inicia un `llama-server` del motor de la tabla 1
 
 El script comprueba que el servidor use un contexto de 2048. Guarda cada respuesta
 sin editar, con los campos de la tabla 3, en `respuestas/<modelo>_<idioma>.jsonl`.
+Cada línea incluye además `tokens_por_segundo_prompt` y
+`tokens_por_segundo_generacion`, medidos por el servidor.
 Mide la memoria pico (RSS) del proceso del servidor cada 0,1 s y la escribe en
 `memoria.csv`. Los registros de cada servidor quedan en `registros/`.
+
+## Cambio respecto a la guía
+
+Por acuerdo del equipo, Bonsai usa PQ2_0 en lugar de Q2_0: son los mismos pesos
+ternarios con otro empaquetado. En una prueba con 10 problemas de MGSM y 16 hilos,
+PQ2_0 en el fork de PrismML generó a 77 t/s, frente a 51 t/s de Q2_0 en llama.cpp,
+con la misma memoria pico (~0,9 GB) y sin diferencia de exactitud distinguible.
+`versiones.txt` registra el commit del fork.
 
 ## Datos
 
