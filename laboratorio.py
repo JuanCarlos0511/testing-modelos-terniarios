@@ -402,6 +402,10 @@ def texto_versiones(cfg):
     submodulo = Path(cfg["bitnet_dir"]) / "3rdparty" / "llama.cpp"
     if submodulo.is_dir():
         lineas.append(f"bitnet.cpp, submódulo llama.cpp: {commit(submodulo)}")
+        parche = RAIZ / "parches" / "bitnet-llamacpp.patch"
+        aplicado = subprocess.run(["git", "-C", str(submodulo), "apply", "--reverse", "--check", str(parche)],
+                                  capture_output=True).returncode == 0
+        lineas.append(f"bitnet.cpp, parches/bitnet-llamacpp.patch: {'aplicado' if aplicado else 'NO APLICADO'}")
     lineas.append(f"llama.cpp: {commit(cfg['llamacpp_dir'])}")
     lineas.append(f"llama.cpp de PrismML (rama prism): {commit(cfg['prism_dir'])}")
     lineas.append(f"MGSM (google-research/url-nlp): {MGSM_COMMIT}")
